@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  firstName String
+  lastName  String
+  username  String     @unique
+  email     String     @unique
+  password  String
+  Quiz      Quiz[]
+  Question  Question[]
+  role      Role       @relation(fields: [roleId], references: [id])
+  roleId    String
+}
+
+model Quiz {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  Team      Team[]
+  Answer    Answer[]
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id       String     @id @default(cuid())
+  name     String     @unique
+  Question Question[]
+}
+
+model QuestionType {
+  id       String     @id @default(cuid())
+  name     String     @unique
+  Question Question[]
+}
+
+model MediaType {
+  id       String     @id @default(cuid())
+  name     String     @unique
+  Question Question[]
+}
+
+model Question {
+  id             String       @id @default(cuid())
+  question       String
+  questionType   QuestionType @relation(fields: [questionTypeId], references: [id])
+  correctAnswer  String
+  category       Category     @relation(fields: [categoryId], references: [id])
+  createdBy      User         @relation(fields: [userId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  mediaURL       String?
+  mediaType      MediaType    @relation(fields: [mediaTypeId], references: [id])
+  questionTypeId String
+  categoryId     String
+  userId         String
+  mediaTypeId    String
+  Answer         Answer[]
+  verified       Boolean      @default(false)
+
+  @@unique([question, questionTypeId])
+}
+
+model Team {
+  id     String   @id @default(cuid())
+  name   String
+  quiz   Quiz     @relation(fields: [quizId], references: [id])
+  quizId String
+  Answer Answer[]
+
+  @@unique([name, quizId])
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  question   Question @relation(fields: [questionId], references: [id])
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  team       Team     @relation(fields: [teamId], references: [id])
+  answer     String
+  questionId String
+  quizId     String
+  teamId     String
+  correct    Boolean?
+
+  @@unique([questionId, quizId, teamId])
+}
+
+model Role {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  rights Right[]
+  users  User[]
+}
+
+model Right {
+  id    String @id @default(cuid())
+  name  String @unique
+  roles Role[]
+}
